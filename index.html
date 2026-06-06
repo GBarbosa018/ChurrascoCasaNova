@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Presentes — Casa Nova</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f7f6f3;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 3.5rem 1.5rem 2rem;
+    }
+
+    .header-icon {
+      font-size: 2.8rem;
+      display: block;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+
+    header h1 {
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    header p {
+      margin-top: 0.6rem;
+      font-size: 1rem;
+      color: #6e6e6e;
+      max-width: 420px;
+      margin-inline: auto;
+    }
+
+    .header-divider {
+      width: 40px;
+      height: 3px;
+      background: #1a1a1a;
+      border-radius: 99px;
+      margin: 1.5rem auto 0;
+    }
+
+    /* ── Grid ── */
+    .gifts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.5rem;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    .card.reserved {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .card.reserved:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Image area */
+    .card-img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #f0eeea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-img .img-placeholder {
+      font-size: 3.5rem;
+      opacity: 0.4;
+      user-select: none;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #ddd;
+      border-top-color: #aaa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Card body */
+    .card-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0.6rem;
+    }
+
+    .card-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .card-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+    }
+
+    .card-link {
+      font-size: 0.78rem;
+      color: #a0a0a0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      width: fit-content;
+    }
+
+    .card-link:hover { color: #555; text-decoration: underline; }
+
+    .card-spacer { flex: 1; }
+
+    /* Gift button */
+    .btn-gift {
+      width: 100%;
+      padding: 0.72rem 1rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-gift:hover { background: #383838; }
+    .btn-gift:active { transform: scale(0.97); }
+
+    /* Reserved badge */
+    .reserved-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #3a7d44;
+      background: #edf7ee;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+    }
+
+    .reserved-badge span { flex-shrink: 0; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 22px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      animation: modal-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
+
+    .modal h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-subtitle {
+      font-size: 0.88rem;
+      color: #6e6e6e;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 11px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 1.25rem;
+    }
+
+    .field-input:focus { border-color: #1a1a1a; }
+    .field-input.error { border-color: #d94f4f; }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 0.78rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 11px;
+      background: transparent;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #6e6e6e;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-cancel:hover { border-color: #b0b0b0; color: #1a1a1a; }
+
+    .btn-confirm {
+      flex: 2;
+      padding: 0.78rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 11px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-confirm:hover { background: #383838; }
+    .btn-confirm:disabled { opacity: 0.6; cursor: default; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      z-index: 200;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 420px) {
+      .gifts-grid { gap: 1rem; padding: 1.5rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="header-icon">🏠🔥</span>
+  <h1>Churrasco de Casa Nova</h1>
+  <p>Escolha um presente e faça parte dessa conquista!</p>
+  <div class="header-divider"></div>
+</header>
+
+<main class="gifts-grid" id="gifts-grid"></main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <span class="modal-icon">🎁</span>
+    <h2 id="modal-title">Confirmar presente</h2>
+    <p class="modal-subtitle" id="modal-subtitle">Preencha seu nome para reservar este presente.</p>
+    <label class="field-label" for="guest-name">Seu nome</label>
+    <input
+      class="field-input"
+      id="guest-name"
+      type="text"
+      placeholder="Ex: João Silva"
+      autocomplete="off"
+      maxlength="60"
+    />
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+      <button class="btn-confirm" id="btn-confirm">Confirmar 🎉</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  /* ── Data ── */
+  const PROXY_URL = 'https://api.allorigins.win/get?url=';
+  const STORAGE_KEY = 'casa-nova-gifts-v1';
+
+  // URL do Web App do Google Apps Script (o "banco" compartilhado).
+  // Deixe '' para modo local/offline. Depois de publicar o Apps Script,
+  // cole aqui a URL terminada em /exec — aí as reservas ficam online p/ todos.
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyGMjNZNWejSVdh6uQZcOXrKwg09mCJPOvzjLlnY1M0oQAICGWf1JiUx6QWlTwWU2uKvg/exec';
+
+  const initialGifts = [
+    {
+      id: 1,
+      nome: 'Jogo de Panelas',
+      url: 'https://produto.mercadolivre.com.br/MLB-4107271844-conjunto-panelas-antiaderente-10-pecas-teflon-varias-cores-_JM?matt_tool=38524122#origin=share&sid=share&action=copy',
+      // Cole aqui a URL direta da imagem (botão direito na foto do produto → "Copiar endereço da imagem")
+      imagem: 'https://http2.mlstatic.com/D_NQ_NP_2X_978965-MLB111357549836_052026-F-conjunto-panelas-antiaderente-10-pecas-teflon-varias-cores.webpe',
+      reservado: false,
+      reservadoPor: '',
+      preco: 'R$178,41',
+    },
+    {
+      id: 2,
+      nome: 'Jogo de Facas',
+      url: 'https://www.mercadolivre.com.br/jogo-de-facas-faqueiro-9-pecas-plenus-aco-inox-tramontina/p/MLB28408264?pdp_filters=item_id%3AMLB3782589243&matt_tool=38524122#origin=share&sid=share&wid=MLB3782589243&action=copy',
+      imagem: 'https://http2.mlstatic.com/D_NQ_NP_2X_746022-MLA99419828578_112025-F.webp',
+      reservado: false,
+      reservadoPor: '',
+    },
+    {
+      id: 3,
+      nome: 'Liquidificador',
+      url: 'https://www.mercadolivre.com.br/liquidificador-philips-walita-daily-collection-13-velocidades-550w-preto-rl2045-bivolt/p/MLB19049614',
+      imagem: '',
+      reservado: false,
+      reservadoPor: '',
+    },
+  ];
+
+  /* ── Persistence ── */
+  function loadGifts() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return initialGifts.map(g => ({ ...g }));
+      const saved = JSON.parse(raw);
+      return initialGifts.map(gift => {
+        const s = saved.find(x => x.id === gift.id);
+        return s ? { ...gift, reservado: s.reservado, reservadoPor: s.reservadoPor } : { ...gift };
+      });
+    } catch {
+      return initialGifts.map(g => ({ ...g }));
+    }
+  }
+
+  function saveGifts() {
+    const slim = gifts.map(({ id, reservado, reservadoPor }) => ({ id, reservado, reservadoPor }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+  }
+
+  let gifts = loadGifts();
+
+  /* ── Sincronização remota (Google Sheets via Apps Script) ── */
+
+  // Aplica a lista de reservas vinda do servidor ao estado local.
+  // O servidor é a fonte da verdade: reseta tudo e aplica só o que veio dele.
+  function applyReservations(reservas) {
+    gifts.forEach(g => { g.reservado = false; g.reservadoPor = ''; });
+    reservas.forEach(r => {
+      const g = gifts.find(x => x.id === Number(r.id));
+      if (g && r.reservadoPor) {
+        g.reservado = true;
+        g.reservadoPor = r.reservadoPor;
+      }
+    });
+    saveGifts();
+  }
+
+  // Busca o estado atual das reservas no servidor (ao carregar a página).
+  async function fetchRemoteReservations() {
+    if (!API_URL) return;
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.reservas)) {
+        applyReservations(data.reservas);
+        renderGifts();
+      }
+    } catch (e) {
+      console.warn('Falha ao buscar reservas remotas:', e);
+    }
+  }
+
+  // Envia uma reserva ao servidor. Content-Type text/plain evita preflight CORS.
+  async function sendReservation(id, nome) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ id, nome }),
+    });
+    return res.json();
+  }
+
+  /* ── Image resolution ──────────────────────────────────────────
+     1. Se o produto tem `imagem` definida, usa direto (sempre funciona).
+     2. Senão, tenta extrair a og:image via proxy CORS.
+        OBS: o Mercado Livre bloqueia esse scraping (anti-bot), então
+        para links do ML é necessário preencher o campo `imagem`.
+  ──────────────────────────────────────────────────────────────── */
+  async function fetchOgImageViaProxy(url) {
+    try {
+      const res = await fetch(PROXY_URL + encodeURIComponent(url));
+      if (!res.ok) return null;
+      const json = await res.json();
+      const html = json.contents || '';
+      const patterns = [
+        /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+        /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+      ];
+      for (const re of patterns) {
+        const m = html.match(re);
+        if (m && m[1]) return m[1];
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function resolveImage(gift) {
+    if (gift.imagem) return gift.imagem;
+    return fetchOgImageViaProxy(gift.url);
+  }
+
+  /* ── Render ── */
+  function renderGifts() {
+    const grid = document.getElementById('gifts-grid');
+    grid.innerHTML = '';
+
+    gifts.forEach(gift => {
+      const card = document.createElement('article');
+      card.className = 'card' + (gift.reservado ? ' reserved' : '');
+      card.innerHTML = `
+        <div class="card-img" id="img-${gift.id}">
+          <div class="spinner"></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">${escHtml(gift.nome)}</div>
+          ${gift.preco ? `<div class="card-price">${escHtml(gift.preco)}</div>` : ''}
+          <a class="card-link" href="${escHtml(gift.url)}" target="_blank" rel="noopener noreferrer">
+            Ver produto ↗
+          </a>
+          <div class="card-spacer"></div>
+          ${gift.reservado
+            ? `<div class="reserved-badge"><span>✓</span> Reservado por ${escHtml(gift.reservadoPor)}</div>`
+            : `<button class="btn-gift" data-id="${gift.id}">Quero presentear</button>`
+          }
+        </div>
+      `;
+      grid.appendChild(card);
+
+      resolveImage(gift).then(imgUrl => {
+        const wrap = document.getElementById(`img-${gift.id}`);
+        if (!wrap) return;
+        if (imgUrl) {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          img.alt = gift.nome;
+          img.loading = 'lazy';
+          img.onerror = () => { wrap.innerHTML = '<span class="img-placeholder">🎁</span>'; };
+          wrap.innerHTML = '';
+          wrap.appendChild(img);
+        } else {
+          wrap.innerHTML = '<span class="img-placeholder">🎁</span>';
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-gift').forEach(btn => {
+      btn.addEventListener('click', () => openModal(Number(btn.dataset.id)));
+    });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ── Modal ── */
+  const overlay    = document.getElementById('modal-overlay');
+  const subtitle   = document.getElementById('modal-subtitle');
+  const guestInput = document.getElementById('guest-name');
+  const btnCancel  = document.getElementById('btn-cancel');
+  const btnConfirm = document.getElementById('btn-confirm');
+  let activeId     = null;
+
+  function openModal(giftId) {
+    activeId = giftId;
+    const gift = gifts.find(g => g.id === giftId);
+    subtitle.textContent = `Reservando: "${gift.nome}"`;
+    guestInput.value = '';
+    guestInput.classList.remove('error');
+    overlay.classList.add('open');
+    requestAnimationFrame(() => guestInput.focus());
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+    activeId = null;
+  }
+
+  async function confirmReservation() {
+    const name = guestInput.value.trim();
+    if (!name) {
+      guestInput.classList.add('error');
+      guestInput.focus();
+      setTimeout(() => guestInput.classList.remove('error'), 700);
+      return;
+    }
+    const gift = gifts.find(g => g.id === activeId);
+
+    // Modo local (sem API configurada): salva só no navegador.
+    if (!API_URL) {
+      gift.reservado = true;
+      gift.reservadoPor = name;
+      saveGifts();
+      closeModal();
+      renderGifts();
+      showToast(`Obrigado, ${name}! Presente reservado 🎉`);
+      return;
+    }
+
+    // Modo online: grava no Google Sheets.
+    btnConfirm.disabled = true;
+    btnConfirm.textContent = 'Reservando...';
+    try {
+      const data = await sendReservation(gift.id, name);
+      if (data.ok) {
+        gift.reservado = true;
+        gift.reservadoPor = name;
+        saveGifts();
+        closeModal();
+        renderGifts();
+        showToast(`Obrigado, ${name}! Presente reservado 🎉`);
+      } else if (data.reason === 'taken') {
+        // Alguém reservou primeiro — atualiza a tela com a verdade do servidor.
+        gift.reservado = true;
+        gift.reservadoPor = data.reservadoPor || 'outra pessoa';
+        saveGifts();
+        closeModal();
+        renderGifts();
+        showToast(`Ops! Já foi reservado por ${gift.reservadoPor}.`);
+      } else {
+        showToast('Não foi possível reservar. Tente novamente.');
+      }
+    } catch (e) {
+      showToast('Erro de conexão. Tente novamente.');
+    } finally {
+      btnConfirm.disabled = false;
+      btnConfirm.textContent = 'Confirmar 🎉';
+    }
+  }
+
+  btnCancel.addEventListener('click', closeModal);
+  btnConfirm.addEventListener('click', confirmReservation);
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+  guestInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmReservation();
+    if (e.key === 'Escape') closeModal();
+  });
+
+  /* ── Toast ── */
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  /* ── Init ── */
+  renderGifts();              // mostra o cache local instantaneamente
+  fetchRemoteReservations(); // depois sincroniza com o servidor
+</script>
+</body>
+</html>
