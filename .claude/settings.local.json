@@ -6,7 +6,10 @@
       "Bash(python3 -c 'import urllib.parse,sys; print\\(urllib.parse.quote\\(sys.argv[1], safe='\\\\'''\\\\''\\)\\)' https://produto.mercadolivre.com.br/MLB-4107271844-conjunto-panelas-antiaderente-10-pecas-teflon-varias-cores-_JM)",
       "Bash(curl -s https://api.allorigins.win/get?url=__CMDSUB_OUTPUT__)",
       "Bash(python3 -c \"import sys,json,re; d=json.load\\(sys.stdin\\); h=d.get\\('contents',''\\) or ''; print\\('len:',len\\(h\\)\\); m=re.findall\\(r'og:image[^>]*content=[\\\\\"\\\\x27]\\([^\\\\\"\\\\x27]+\\)', h\\); print\\('og:image found:', m[:3]\\); print\\('has captcha:', 'captcha' in h.lower\\(\\) or 'robot' in h.lower\\(\\)\\)\")",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "PowerShell(gh *)"
     ]
   }
 }
